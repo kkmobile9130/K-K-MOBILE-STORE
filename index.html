@@ -2,84 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>K K MOBILE STORE</title>
 
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;
- font-family:Arial;
- background:#f3f4f6;
-}
-header{
- background:#111827;
- color:white;
- padding:22px;
- text-align:center;
-}
-header h1{margin:0;color:#facc15}
-.search{
- width:90%;
- padding:13px;
- margin:15px 5%;
- border-radius:10px;
- border:1px solid #ddd;
-}
-.categories{
- display:flex;
- overflow:auto;
- gap:10px;
- padding:10px;
-}
-.categories button{
- padding:10px 16px;
- border:0;
- border-radius:20px;
- background:#111827;
- color:white;
- white-space:nowrap;
-}
-.products{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:12px;
- padding:12px;
-}
-.card{
- background:white;
- border-radius:12px;
- padding:10px;
- text-align:center;
- box-shadow:0 2px 8px #ddd;
-}
-.card img{
- width:100%;
- height:130px;
- object-fit:contain;
-}
-.price{
- color:#16a34a;
- font-weight:bold;
-}
-.add{
- background:#111827;
- color:white;
- padding:10px;
- border:0;
- border-radius:8px;
- width:100%;
-}
-.cart{
- position:fixed;
- bottom:0;
- background:#16a34a;
- color:white;
- width:100%;
- padding:16px;
- text-align:center;
- font-size:17px;
- border:0;
+body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#111827}
+header{background:#111827;color:white;text-align:center;padding:20px 12px}
+header h1{margin:0;color:#facc15;font-size:27px}
+header p{margin:6px 0 0}
+.wrap{max-width:1100px;margin:auto;padding:12px 12px 90px}
+#search{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:10px;font-size:16px;margin:8px 0}
+#categories{display:flex;gap:8px;overflow-x:auto;padding:8px 0 14px}
+#categories button{white-space:nowrap;border:0;border-radius:20px;background:#1f2937;color:#fff;padding:10px 15px}
+#categories button.active{background:#eab308;color:#111827}
+#status{font-size:13px;color:#4b5563;margin:4px 0 12px}
+#products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:white;border-radius:12px;padding:10px;box-shadow:0 2px 8px #00000012;min-width:0}
+.card img{width:100%;height:135px;object-fit:contain;background:#f9fafb;border-radius:8px}
+.card h3{font-size:15px;margin:9px 0 5px}
+.desc{font-size:12px;color:#6b7280;min-height:28px}
+.price{font-weight:bold;color:#15803d;margin:8px 0}
+.add{width:100%;padding:10px;border:0;border-radius:8px;background:#111827;color:white;font-weight:bold}
+#cartbar{position:fixed;bottom:0;left:0;width:100%;padding:12px;background:#16a34a;color:white;border:0;font-size:16px;font-weight:bold}
+#cartbox{display:none;background:white;border-radius:12px;padding:12px;margin:12px 0;box-shadow:0 2px 8px #0002}
+.cartrow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #eee;font-size:14px}
+.qty button{padding:3px 8px;margin:0 3px}
+#checkout{background:#16a34a;color:white;border:0;border-radius:8px;padding:12px;width:100%;margin-top:10px;font-weight:bold}
+@media(min-width:650px){
+#products{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 </style>
 </head>
@@ -91,94 +42,159 @@ header h1{margin:0;color:#facc15}
 <p>Mobile Accessories Store</p>
 </header>
 
-<input class="search" id="search"
-placeholder="Search Products..."
-oninput="showProducts()">
+<main class="wrap">
 
-<div class="categories">
-<button onclick="filter('All')">All</button>
-<button onclick="filter('Cover')">Mobile Covers</button>
-<button onclick="filter('Glass')">Tempered Glass</button>
-<button onclick="filter('Charger')">Chargers</button>
-<button onclick="filter('Cable')">Cables</button>
-<button onclick="filter('Earphone')">Earphones</button>
-</div>
+<input id="search" placeholder="Search products..." oninput="renderProducts()">
 
-<div class="products" id="products"></div>
+<div id="categories"></div>
 
-<button class="cart" onclick="order()">
-🛒 View Cart / WhatsApp Order
-(<span id="count">0</span>)
+<div id="status">Loading products...</div>
+
+<section id="products"></section>
+
+<section id="cartbox">
+<h3>Your Cart</h3>
+<div id="cartitems"></div>
+<p id="total"></p>
+<button id="checkout" onclick="sendOrder()">Order on WhatsApp</button>
+</section>
+
+</main>
+
+<button id="cartbar" onclick="toggleCart()">
+🛒 View Cart (<span id="cartcount">0</span>)
 </button>
 
 <script>
 
-const items=[
-{name:"Mobile Cover",price:150,cat:"Cover",
-img:"https://placehold.co/300x200?text=Mobile+Cover"},
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpN3j7QDGI12PspEOc3t_CxjX0pPnDQkiVJJmqiPwNgbedynfytLTj19WpamrF7uebg7ryQ7Pl8T1H/pub?gid=2075682089&single=true&output=csv";
 
-{name:"Tempered Glass",price:100,cat:"Glass",
-img:"https://placehold.co/300x200?text=Tempered+Glass"},
+const WHATSAPP_NUMBER = "918055383860";
 
-{name:"Fast Charger",price:250,cat:"Charger",
-img:"https://placehold.co/300x200?text=Charger"},
+let products=[], cart={}, activeCategory="All";
 
-{name:"USB Cable",price:100,cat:"Cable",
-img:"https://placehold.co/300x200?text=USB+Cable"},
+function parseCSV(text){
+const rows=[];
+let row=[],field="",quoted=false;
 
-{name:"Earphone",price:199,cat:"Earphone",
-img:"https://placehold.co/300x200?text=Earphone"}
-];
+for(let i=0;i<text.length;i++){
+const c=text[i],n=text[i+1];
 
-let cart=[];
-let category="All";
-
-function showProducts(){
-let q=document.getElementById("search").value.toLowerCase();
-
-document.getElementById("products").innerHTML=
-items.filter(p=>
-(category==="All"||p.cat===category)&&
-p.name.toLowerCase().includes(q)
-).map((p,i)=>`
-<div class="card">
-<img src="${p.img}">
-<h3>${p.name}</h3>
-<p class="price">₹${p.price}</p>
-<button class="add" onclick="addCart('${p.name}')">
-Add to Cart
-</button>
-</div>
-`).join("");
+if(c==='"' && quoted && n==='"'){
+field+='"';i++;
+}
+else if(c==='"'){
+quoted=!quoted;
+}
+else if(c===',' && !quoted){
+row.push(field);field="";
+}
+else if((c==='\n'||c==='\r')&&!quoted){
+if(c==='\r'&&n==='\n')i++;
+row.push(field);
+if(row.some(x=>x.trim()!==""))rows.push(row);
+row=[];field="";
+}
+else{
+field+=c;
+}
 }
 
-function filter(c){
-category=c;
-showProducts();
+row.push(field);
+if(row.some(x=>x.trim()!==""))rows.push(row);
+
+return rows;
 }
 
-function addCart(name){
-let p=items.find(x=>x.name===name);
-cart.push(p);
-document.getElementById("count").innerText=cart.length;
+function normalize(s){
+return (s||"").replace(/^\uFEFF/,"").trim().toLowerCase();
 }
 
-function order(){
-if(cart.length===0){
-alert("Please add products first!");
-return;
-}
-let msg="Hello K K MOBILE, I want to order:%0A";
-cart.forEach(p=>{
-msg+=p.name+" - Rs."+p.price+"%0A";
-});
-let total=cart.reduce((s,p)=>s+p.price,0);
-msg+="%0ATotal: Rs."+total;
-window.open("https://wa.me/918055383860?text="+msg);
+function safeImage(url){
+return /^https?:\/\//i.test(url||"")?url:"https://placehold.co/400x300?text=K+K+MOBILE";
 }
 
-showProducts();
+async function loadProducts(){
 
-</script>
-</body>
-</html>
+const status=document.getElementById("status");
+
+try{
+
+const response=await fetch(CSV_URL,{cache:"no-store"});
+
+if(!response.ok)throw new Error("Sheet could not be loaded");
+
+const rows=parseCSV(await response.text());
+
+if(rows.length<2)throw new Error("No product rows found");
+
+const heads=rows[0].map(normalize);
+
+const col=(...names)=>heads.findIndex(h=>names.includes(h));
+
+const ix={
+name:col("product name","name"),
+price:col("price (₹)","price","price (rs)"),
+cat:col("category"),
+img:col("image url","image"),
+desc:col("description"),
+stock:col("stock qty","stock"),
+available:col("available")
+};
+
+products=rows.slice(1).map(r=>({
+
+name:(r[ix.name]||"").trim(),
+
+price:Number((r[ix.price]||"0").replace(/[^\d.]/g,""))||0,
+
+category:(r[ix.cat]||"Other").trim()||"Other",
+
+image:safeImage((r[ix.img]||"").trim()),
+
+description:(r[ix.desc]||"").trim(),
+
+stock:(r[ix.stock]||"").trim(),
+
+available:(r[ix.available]||"Yes").trim().toLowerCase()
+
+})).filter(p=>p.name && p.available!=="no" && p.available!=="false");
+
+status.textContent=products.length+" products loaded.";
+
+renderCategories();
+renderProducts();
+
+}
+catch(e){
+
+status.textContent="Products could not load. Please check your Google Sheet.";
+
+document.getElementById("products").innerHTML="<p>Product list unavailable right now.</p>";
+
+}
+
+}
+
+function renderCategories(){
+
+const cats=["All",...new Set(products.map(p=>p.category))];
+
+document.getElementById("categories").innerHTML=cats.map(c=>
+`<button class="${c===activeCategory?'active':''}" onclick="setCategory(${JSON.stringify(c)})">${escapeHTML(c)}</button>`
+).join("");
+
+}
+
+function setCategory(c){
+activeCategory=c;
+renderCategories();
+renderProducts();
+}
+
+function escapeHTML(s){
+
+return String(s).replace(/[&<>"']/g,c=>({
+"&":"&amp;",
+"<":"&lt;",
+">":"&
