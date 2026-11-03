@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K K MOBILE STORE</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial;
+ background:#f3f4f6;
+}
+header{
+ background:#111827;
+ color:white;
+ padding:22px;
+ text-align:center;
+}
+header h1{margin:0;color:#facc15}
+.search{
+ width:90%;
+ padding:13px;
+ margin:15px 5%;
+ border-radius:10px;
+ border:1px solid #ddd;
+}
+.categories{
+ display:flex;
+ overflow:auto;
+ gap:10px;
+ padding:10px;
+}
+.categories button{
+ padding:10px 16px;
+ border:0;
+ border-radius:20px;
+ background:#111827;
+ color:white;
+ white-space:nowrap;
+}
+.products{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:12px;
+ padding:12px;
+}
+.card{
+ background:white;
+ border-radius:12px;
+ padding:10px;
+ text-align:center;
+ box-shadow:0 2px 8px #ddd;
+}
+.card img{
+ width:100%;
+ height:130px;
+ object-fit:contain;
+}
+.price{
+ color:#16a34a;
+ font-weight:bold;
+}
+.add{
+ background:#111827;
+ color:white;
+ padding:10px;
+ border:0;
+ border-radius:8px;
+ width:100%;
+}
+.cart{
+ position:fixed;
+ bottom:0;
+ background:#16a34a;
+ color:white;
+ width:100%;
+ padding:16px;
+ text-align:center;
+ font-size:17px;
+ border:0;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>K K MOBILE</h1>
+<p>Mobile Accessories Store</p>
+</header>
+
+<input class="search" id="search"
+placeholder="Search Products..."
+oninput="showProducts()">
+
+<div class="categories">
+<button onclick="filter('All')">All</button>
+<button onclick="filter('Cover')">Mobile Covers</button>
+<button onclick="filter('Glass')">Tempered Glass</button>
+<button onclick="filter('Charger')">Chargers</button>
+<button onclick="filter('Cable')">Cables</button>
+<button onclick="filter('Earphone')">Earphones</button>
+</div>
+
+<div class="products" id="products"></div>
+
+<button class="cart" onclick="order()">
+🛒 View Cart / WhatsApp Order
+(<span id="count">0</span>)
+</button>
+
+<script>
+
+const items=[
+{name:"Mobile Cover",price:150,cat:"Cover",
+img:"https://placehold.co/300x200?text=Mobile+Cover"},
+
+{name:"Tempered Glass",price:100,cat:"Glass",
+img:"https://placehold.co/300x200?text=Tempered+Glass"},
+
+{name:"Fast Charger",price:250,cat:"Charger",
+img:"https://placehold.co/300x200?text=Charger"},
+
+{name:"USB Cable",price:100,cat:"Cable",
+img:"https://placehold.co/300x200?text=USB+Cable"},
+
+{name:"Earphone",price:199,cat:"Earphone",
+img:"https://placehold.co/300x200?text=Earphone"}
+];
+
+let cart=[];
+let category="All";
+
+function showProducts(){
+let q=document.getElementById("search").value.toLowerCase();
+
+document.getElementById("products").innerHTML=
+items.filter(p=>
+(category==="All"||p.cat===category)&&
+p.name.toLowerCase().includes(q)
+).map((p,i)=>`
+<div class="card">
+<img src="${p.img}">
+<h3>${p.name}</h3>
+<p class="price">₹${p.price}</p>
+<button class="add" onclick="addCart('${p.name}')">
+Add to Cart
+</button>
+</div>
+`).join("");
+}
+
+function filter(c){
+category=c;
+showProducts();
+}
+
+function addCart(name){
+let p=items.find(x=>x.name===name);
+cart.push(p);
+document.getElementById("count").innerText=cart.length;
+}
+
+function order(){
+if(cart.length===0){
+alert("Please add products first!");
+return;
+}
+let msg="Hello K K MOBILE, I want to order:%0A";
+cart.forEach(p=>{
+msg+=p.name+" - Rs."+p.price+"%0A";
+});
+let total=cart.reduce((s,p)=>s+p.price,0);
+msg+="%0ATotal: Rs."+total;
+window.open("https://wa.me/918055383860?text="+msg);
+}
+
+showProducts();
+
+</script>
+</body>
+</html>
